@@ -71,45 +71,52 @@
 
 ---
 
-### Phase 2: Data Cleaning & Preprocessing
+### Phase 2: Improved Data Cleaning & Feature Engineering (Revised)
 
-#### 8.1 Data Cleaning
+#### Philosophy: Sequences are PRIMARY signal, metadata is secondary!
 
-- [x] **8.1.1 Handle Missing Values & Placeholders**
-  - Replaced -999.0 placeholders with NaN
-  - Median imputation for numeric columns + missing indicators
-  - Filled categorical missing values with 'Unknown'
+#### 8.1.1 Handle Missing HLA Values Properly
+- [x] Replaced -999.0 placeholders with NaN
+- [x] Created explicit `_missing` flags for each HLA locus
+- [x] **NO "Unknown" hack** - missing values remain NaN
+- [x] All rows kept (no dropping due to missing values)
 
-- [x] **8.1.2 Remove Unnecessary Columns**
-  - Dropped columns with >80% missing values
-  - Removed zero/low variance columns
-  - Removed dominant single-category columns (>99%)
-  - Removed redundant identifier columns
+#### 8.1.2 Out-of-Fold Target Encoding for HLA (With Smoothing)
+- [x] Implemented out-of-fold target encoding to prevent leakage
+- [x] Applied smoothing toward global mean to regularize rare alleles
+- [x] Created `target_encode_oof()` function with configurable smoothing weight
+- [x] Stored encoding maps for test set application
 
-- [x] **8.1.3 Encode Categorical Variables**
-  - Binary/Label encoding for 2-value columns
-  - One-hot encoding for low cardinality (≤10 values)
-  - Target + frequency encoding for medium cardinality (≤50 values)
-  - Frequency encoding for high cardinality columns
-  - Saved encoding mappings for test data
+#### 8.1.3 HLA Interaction Features
+- [x] Created HLA-HLA pairwise interactions (haplotype effects):
+  - HLA_A_1 × HLA_B_1, HLA_A_2 × HLA_B_2
+  - HLA_A_1 × HLA_C_1, HLA_B_1 × HLA_C_1
+  - HLA_DRB1_1 × HLA_DQB1_1, HLA_DRB1_2 × HLA_DQB1_2
+- [x] Created HLA × study_group interactions
+- [x] Applied target encoding to interaction features (with higher smoothing)
 
-- [x] **8.1.4 Normalize/Scale Numeric Features**
-  - Applied RobustScaler (robust to outliers)
-  - Created scaled versions of numeric features
-  - Saved scaling parameters for test data
+#### 8.1.4 Repertoire-Level Feature Extraction Functions (PRIMARY SIGNAL)
+- [x] Created `extract_repertoire_features()` function with:
+  - Basic stats: n_sequences, total_templates, clonality
+  - CDR3 length: mean, std, median, percentiles, short/long fractions
+  - V gene usage: unique count, entropy, Gini, top gene frequencies
+  - J gene usage: unique count, entropy, top gene frequency
+  - D gene usage: unique count, missing fraction, entropy
+  - V-J pairing diversity: unique pairs, entropy
+  - Amino acid composition: hydrophobic, charged, aromatic, cysteine fractions
+  - Clone size distribution: mean, std, max, Gini, top clone fractions
+- [x] Created `gini_coefficient()` helper function
 
-- [x] **8.1.5 Repertoire-Level Cleaning Functions**
-  - Created `clean_repertoire_data()` function:
-    - Removes missing junction_aa sequences
-    - Filters invalid amino acid characters
-    - Removes stop codon sequences (*)
-    - Filters by sequence length (5-50 aa)
-    - Cleans v_call, j_call, d_call columns
-    - Handles templates/duplicate_count
+#### 8.1.5 K-mer Features from CDR3 Sequences
+- [x] Created `extract_kmers()` for single sequence k-mer extraction
+- [x] Created `build_kmer_vocabulary()` for building vocabulary from training data
+- [x] Created `extract_kmer_features_with_vocab()` for feature extraction with fixed vocabulary
+- [x] Supports abundance-weighted k-mer counting
 
-- [x] **8.1.6 Data Cleaning Summary**
-  - Documented all transformations
-  - Stored cleaned metadata in `train_metadata_cleaned`
+#### 8.1.6 Final Data Cleaning Summary
+- [x] Documented all transformations
+- [x] Stored encoding maps in `all_encodings` dictionary
+- [x] Ready for feature engineering and modeling
 
 ---
 
@@ -173,9 +180,13 @@
 |----------|-------------|--------|
 | `train_metadata` | Original combined metadata | ✅ Created |
 | `train_metadata_cleaned` | Cleaned & processed metadata | ✅ Created |
-| `encoding_mappings` | Categorical encoding maps | ✅ Saved |
-| `scaling_params` | Numeric scaling parameters | ✅ Saved |
-| `clean_repertoire_data()` | Repertoire cleaning function | ✅ Defined |
+| `all_encodings` | HLA & interaction encoding maps | ✅ Saved |
+| `hla_target_encodings` | OOF target encodings for HLA | ✅ Saved |
+| `interaction_target_encodings` | OOF target encodings for interactions | ✅ Saved |
+| `extract_repertoire_features()` | Primary feature extraction function | ✅ Defined |
+| `build_kmer_vocabulary()` | K-mer vocabulary builder | ✅ Defined |
+| `extract_kmer_features_with_vocab()` | K-mer feature extraction | ✅ Defined |
+| `target_encode_oof()` | Out-of-fold target encoding | ✅ Defined |
 
 ---
 
